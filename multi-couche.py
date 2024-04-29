@@ -9,15 +9,15 @@ class reseauMultiCouche:
     def __init__(self, row_num=3):
         self.coucheCache = []
         for i in range(2):
-            self.coucheCache.append(PerceptronMultiCouche(row_num))
-        self.coucheSortie = PerceptronMultiCouche(row_num)
+            self.coucheCache.append(PerceptronMultiCouche(row_num, tauxApprentissage=0.8))
+        self.coucheSortie = PerceptronMultiCouche(row_num, tauxApprentissage=0.8)
         
         self.row_num = row_num
     
     def processBoucle(self, inputs:np.array, labels:np.array):
-        EMoyenne = 1000
+        EMoyenne = 2000
         iteration = 0
-        while EMoyenne > 0.001 and iteration < 1000:
+        while EMoyenne > 0.001 and iteration < 20000:
             EMoyenne = self.process(inputs, labels)
             iteration = iteration + 1
         print("Le modele a ete resolu en {} itérations avec un Erreur moyenne de {}".format(iteration, EMoyenne))
@@ -35,10 +35,10 @@ class reseauMultiCouche:
             Yc = neurone.activation(Kc)
             
             # On l'ajoute à la liste (création de l'input de la couche suivante)
-            activations_list.append([Yc])
+            activations_list.append(Yc)
 
         # Convert the list of activations to a numpy array and reshape it to have one activation per column
-        YcList = np.array(activations_list).reshape(4, 2)
+        YcList = np.transpose(np.array(activations_list))
 
         # On ajoute un colonne de valeurs virtuelles 1 
         YcList = np.insert(YcList, 0, 1, axis=1)
@@ -53,7 +53,7 @@ class reseauMultiCouche:
         
         # Calcul de l'erreur + Emoyenne
         errorSortie = self.coucheSortie.calculateError(Zs, np.subtract(labels, Zs.flatten()))        
-        EMoyenne = self.coucheSortie.calculateEmoyen(errorSortie)
+        EMoyenne = self.coucheSortie.calculateEmoyen(np.subtract(labels, Zs.flatten()))
         print("EMoyenne : {}".format(EMoyenne))
 
         # Retro-propagation de l'erreur de sortie + mise à jour
@@ -119,8 +119,7 @@ def XOR():
     model = reseauMultiCouche()
     model.processBoucle(inputs, labels)
     
-    showPlotlyColored(model.coucheCache[0].getPlotlySeuillage("Not trained"), np.column_stack((labels, inputs[:, 1:])))
-    showPlotlyColored(model.coucheCache[1].getPlotlySeuillage("Not trained"), np.column_stack((labels, inputs[:, 1:])))
+    showPlotlyColored2(model.coucheCache[0].getPlotlySeuillage("Neurone cache 1"), model.coucheCache[1].getPlotlySeuillage("Neurone cache 2"), np.column_stack((labels, inputs[:, 1:])))
 
 
 def main412():
@@ -130,6 +129,41 @@ def main412():
     model = reseauMultiCouche()
     
     showPlotlyColored(model.getPlotlySeuillage("Not trained"), np.column_stack((labels, inputs[:, 1:])))
+
+
+def showPlotlyColored2(ligneDecision, ligneDecision2,  data):
+    x_data = []
+    y_data = []
+    color_data = []
+    
+    for d in data:
+        x_data.append(d[1])
+        y_data.append(d[2])
+        color_data.append('green' if d[0] > 0 else 'red')
+    
+    # Créer un scatter plot pour les points
+    scatter_trace = go.Scatter(x=x_data, y=y_data, mode='markers', name='Values',
+                               marker=dict(color=color_data))
+
+    # Créer la figure
+    fig = go.Figure()
+
+    # Ajouter les traces à la figure
+    fig.add_trace(scatter_trace)
+    fig.add_trace(ligneDecision)
+    fig.add_trace(ligneDecision2)
+
+    # Calculate the range for x and y axis
+    x_range = [min(x_data) - 1, max(x_data) + 1]
+    y_range = [min(y_data) - 1, max(y_data) + 1]
+
+    # Ajouter une mise en page
+    fig.update_layout(title='Scatter Plot with Independent Line',
+                    xaxis=dict(title='X-Axis', range=x_range),
+                    yaxis=dict(title='Y-Axis', range=y_range))
+
+    # Afficher la figure
+    fig.show()
 
 if __name__ == '__main__':
     XOR()
