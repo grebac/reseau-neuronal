@@ -1,4 +1,4 @@
-from matrice import Perceptron
+from matrice import Perceptron, PerceptronMultiCouche
 import pandas as pd 
 import numpy as np
 import os
@@ -67,6 +67,15 @@ def showPlotlyColored(ligneDecision, data):
     # Afficher la figure
     fig.show()
 
+def predict(monocouche:list[Perceptron], input:np.array):
+    result = []
+    classN = 1
+    for neurone in monocouche:
+        Y = neurone.calculateY(input)
+        result.append(("class" + str(classN), neurone.activation(Y)))
+        classN = classN + 1
+    return result
+
 def table31():
     inputs, labels, row_num, output_num = importData('Datas\\table_3_1.csv')
 
@@ -81,15 +90,8 @@ def table31():
     showPlotlyColored(monocouche[0].getPlotlySeuillage("label 0"), np.column_stack((labels[0], inputs[:,1:]))) 
     showPlotlyColored(monocouche[1].getPlotlySeuillage("label 1"), np.column_stack((labels[1], inputs[:,1:]))) 
     showPlotlyColored(monocouche[2].getPlotlySeuillage("label 2"), np.column_stack((labels[2], inputs[:,1:]))) 
-      
-    # Affichage des résultats combinés
-    # seuillages = []
     
-    # seuillages.append(monocouche[0].getPlotlySeuillage("label 1"))
-    # seuillages.append(monocouche[1].getPlotlySeuillage("label 2"))
-    # seuillages.append(monocouche[2].getPlotlySeuillage("label 3"))
-    
-    # displayPlotly(inputs[:, 1:], seuillages)
+    return monocouche
 
 def importData35(excel_file_path):
     # Get the directory of the current script
@@ -109,10 +111,10 @@ def importData35(excel_file_path):
     # Numpy s'occupe de transposer le vecteur ligne en vecteur colonne (nécessaire pour le bon fonctionnement de la multiplication matricielle)
     labels = numpy_array[:,-4:]
     
-    first_labels = labels[0,:]
-    second_labels = labels[1,:]
-    thrid_labels = labels[2,:]
-    fourth_labels = labels[3,:]
+    first_labels = labels[:,0]
+    second_labels = labels[:,1]
+    thrid_labels = labels[:,2]
+    fourth_labels = labels[:,3]
     
     final_labels = np.array([first_labels, second_labels, thrid_labels, fourth_labels])
 
@@ -131,8 +133,114 @@ def table35():
         monocouche.append(Perceptron(row_num, IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.0005))
         (E, iteration) = monocouche[i].process(inputs, labels[i])
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
+        
+    return monocouche
+        
+def signe(trainingDataset:np.array, row_num, output_num):
+    inputs = trainingDataset[0]
+    labels = trainingDataset[1]
+
+    # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
+    monocouche = list[Perceptron]()
+    for i in range(output_num):
+        monocouche.append(Perceptron(row_num, IterationMax=3000, EMoyenneMax=0.00001, sigma=0.1, tauxApprentissage=0.0005))
+        (E, iteration) = monocouche[i].batchProcess(inputs, labels[i],250)
+        print("Erreur moyenne : {} en {} itérations".format(E, iteration))
+        
+    return monocouche
+
+def importSigne(excel_file_path):
+    # Get the directory of the current script
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    excel_file_path = os.path.join(dir_path, excel_file_path)
+    
+    # Read the Excel file into a pandas DataFrame
+    df = pd.read_csv(excel_file_path, header=None)
+    numpy_array = df.values
+    
+
+    # On filtre un trainingDataset et un validationDataset
+    (trainingDataset, validationDataset) = splitDatasets(numpy_array)
+    
+    training_inputs = trainingDataset[:, :-5]
+    training_inputs = np.insert(training_inputs, 0, 1, axis=1)
+    
+    
+    
+    # Les autres colonnes sont des labels
+    # Numpy s'occupe de transposer le vecteur ligne en vecteur colonne (nécessaire pour le bon fonctionnement de la multiplication matricielle)
+    training_labels = trainingDataset[:,-5:]
+    
+    first_labels = training_labels[:,0]
+    second_labels = training_labels[:,1]
+    thrid_labels = training_labels[:,2]
+    fourth_labels = training_labels[:,3]
+    fifth_labels = training_labels[:,4]
+    
+    training_final_labels = np.array([first_labels, second_labels, thrid_labels, fourth_labels, fifth_labels])
+
+    # On merge les inputs et les labels en un dataset
+    trainingDataset = [training_inputs, training_final_labels]
+
+
+
+    # On récupère jusqu'au 4 dernières colonnes
+    validation_inputs:np.array = validationDataset[:, :-5]
+    # On ajoute un colonne de valeurs virtuelles 1 
+    validation_inputs = np.insert(validation_inputs, 0, 1, axis=1)
+
+    # Les autres colonnes sont des labels
+    # Numpy s'occupe de transposer le vecteur ligne en vecteur colonne (nécessaire pour le bon fonctionnement de la multiplication matricielle)
+    validation_labels = validationDataset[:,-5:]
+    
+    first_labels = validation_labels[:,0]
+    second_labels = validation_labels[:,1]
+    thrid_labels = validation_labels[:,2]
+    fourth_labels = validation_labels[:,3]
+    fifth_labels = validation_labels[:,4]
+    
+    validation_final_labels = np.array([first_labels, second_labels, thrid_labels, fourth_labels, fifth_labels])
+
+    validationDataset = [validation_inputs, validation_final_labels]
+
+    row_num = training_inputs.shape[1]
+    output_num = training_labels.shape[1]
+
+    return trainingDataset, validationDataset, row_num, output_num
+
+def splitDatasets(numpy_array):    
+    # 47 car 21 paramètres en XY => 21*2 = 42 + les 5 labels => 42+5 = 47
+    trainingSet = np.empty((0,47))
+    validationSet = np.empty((0,47))
+    # On veut un jeu de données d'entrainement et de validation.
+    # Attention, il nous faut répartir pour chaque classe une portion proportionnelle de chaque classe
+    for classes in range(1,6):
+        # On récupère les éléments classe par classe
+        filter = numpy_array[:,-(6-classes)].astype(int)
+        elements = numpy_array[filter == 1]
+        print(elements)
+        
+        # Pour chaque classe, on garde 1/6 des éléments 
+        # 60 éléments par classes => 50 training + 10 validation
+        np.random.shuffle(elements)
+        trainingSet = np.vstack((trainingSet, elements[:50]))
+        validationSet = np.vstack((validationSet, elements[50:]))
+
+    return (trainingSet, validationSet)
+        
+        
+        
     
 if __name__ == "__main__":
-    table31()
-    # table35()
-        
+    # monocouche = table31()
+    # result = predict(monocouche, np.array((1,2.5, 1.5)))
+    # print(result)
+    
+    # monocouche = table35()
+    # result = predict(monocouche, np.array((0,0,1,0,0,0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,0,0,0,1,0,0)))
+    # print(result)
+    
+    trainingDataset, validationDataset, row_num, output_num = importSigne('Datas\\LangageDesSignes\\data_formatted.csv')
+    monocouche = signe(trainingDataset, row_num, output_num)
+    result = predict(monocouche, validationDataset[0][0])
+    print("On obtient : {0} || On était censé obtenir : {1}".format(result, validationDataset[1][:,0]))

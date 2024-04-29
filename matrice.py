@@ -31,9 +31,11 @@ class Perceptron:
     
     def batchProcess(self, inputs:np.array, labels:np.array, lots:int):
         EMoyenne = 0
+        iterationTotal = 0
         for i in range(0, inputs.shape[0], lots):
-            EMoyenne = self.process(inputs[i:i+lots], labels[i:i+lots])
-        print("Erreur moyenne batch : {}".format(EMoyenne))
+            (EMoyenne, iteration) = self.process(inputs[i:i+lots], labels[i:i+lots])
+            iterationTotal += iteration
+        return (EMoyenne, iterationTotal)
         
     def activation(self, Y:np.array):
         return np.where(Y > 0, 1, -1)
