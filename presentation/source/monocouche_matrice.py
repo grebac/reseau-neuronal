@@ -1,10 +1,10 @@
-from matrice import Perceptron, PerceptronMultiCouche
+from .matrice import Perceptron
 import pandas as pd 
 import numpy as np
 import os
 import plotly.graph_objects as go
 
-def importData(excel_file_path):
+def importData31(excel_file_path):
     # Get the directory of the current script
     dir_path = os.path.dirname(os.path.realpath(__file__))
     excel_file_path = os.path.join(dir_path, excel_file_path)
@@ -34,55 +34,13 @@ def importData(excel_file_path):
 
     return inputs, final_labels, row_num, output_num
 
-def showPlotlyColored(ligneDecision, data):
-    x_data = []
-    y_data = []
-    color_data = []
-    
-    for d in data:
-        x_data.append(d[1])
-        y_data.append(d[2])
-        color_data.append('green' if d[0] > 0 else 'red')
-    
-    # Créer un scatter plot pour les points
-    scatter_trace = go.Scatter(x=x_data, y=y_data, mode='markers', name='Values',
-                               marker=dict(color=color_data))
-
-    # Créer la figure
-    fig = go.Figure()
-
-    # Ajouter les traces à la figure
-    fig.add_trace(scatter_trace)
-    fig.add_trace(ligneDecision)
-
-    # Calculate the range for x and y axis
-    x_range = [min(x_data) - 1, max(x_data) + 1]
-    y_range = [min(y_data) - 1, max(y_data) + 1]
-
-    # Ajouter une mise en page
-    fig.update_layout(title='Scatter Plot with Independent Line',
-                    xaxis=dict(title='X-Axis', range=x_range),
-                    yaxis=dict(title='Y-Axis', range=y_range))
-
-    # Afficher la figure
-    fig.show()
-
-def predict(monocouche:list[Perceptron], input:np.array):
-    result = []
-    classN = 1
-    for neurone in monocouche:
-        Y = neurone.calculateY(input)
-        result.append(("class" + str(classN), neurone.activation(Y)))
-        classN = classN + 1
-    return result
-
-def table31():
-    inputs, labels, row_num, output_num = importData('Datas\\table_3_1.csv')
+def table31(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.0005):
+    inputs, labels, row_num, output_num = importData31('Datas\\table_3_1.csv')
 
     # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
     monocouche = list[Perceptron]()
     for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.0005))
+        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
         (E, iteration) = monocouche[i].process(inputs, labels[i])
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
 
@@ -92,6 +50,7 @@ def table31():
     showPlotlyColored(monocouche[2].getPlotlySeuillage("label 2"), np.column_stack((labels[2], inputs[:,1:]))) 
     
     return monocouche
+
 
 def importData35(excel_file_path):
     # Get the directory of the current script
@@ -124,30 +83,18 @@ def importData35(excel_file_path):
 
     return inputs, final_labels, row_num, output_num
     
-def table35():
+def table35(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.0005):
     inputs, labels, row_num, output_num = importData35('Datas\\table_3_5.csv')
 
     # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
     monocouche = list[Perceptron]()
     for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.0005))
+        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
         (E, iteration) = monocouche[i].process(inputs, labels[i])
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
         
     return monocouche
-        
-def signe(trainingDataset:np.array, row_num, output_num):
-    inputs = trainingDataset[0]
-    labels = trainingDataset[1]
 
-    # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
-    monocouche = list[Perceptron]()
-    for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=3000, EMoyenneMax=0.00001, sigma=0.1, tauxApprentissage=0.0005))
-        (E, iteration) = monocouche[i].batchProcess(inputs, labels[i],250)
-        print("Erreur moyenne : {} en {} itérations".format(E, iteration))
-        
-    return monocouche
 
 def importSigne(excel_file_path):
     # Get the directory of the current script
@@ -207,6 +154,19 @@ def importSigne(excel_file_path):
     output_num = training_labels.shape[1]
 
     return trainingDataset, validationDataset, row_num, output_num
+        
+def signe(trainingDataset:np.array, row_num, output_num):
+    inputs = trainingDataset[0]
+    labels = trainingDataset[1]
+
+    # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
+    monocouche = list[Perceptron]()
+    for i in range(output_num):
+        monocouche.append(Perceptron(row_num, IterationMax=3000, EMoyenneMax=0.00001, sigma=0.1, tauxApprentissage=0.0005))
+        (E, iteration) = monocouche[i].batchProcess(inputs, labels[i],250)
+        print("Erreur moyenne : {} en {} itérations".format(E, iteration))
+        
+    return monocouche
 
 def splitDatasets(numpy_array):    
     # 47 car 21 paramètres en XY => 21*2 = 42 + les 5 labels => 42+5 = 47
@@ -227,9 +187,51 @@ def splitDatasets(numpy_array):
         validationSet = np.vstack((validationSet, elements[50:]))
 
     return (trainingSet, validationSet)
+      
         
-        
-        
+def showPlotlyColored(ligneDecision, data):
+    x_data = []
+    y_data = []
+    color_data = []
+    
+    for d in data:
+        x_data.append(d[1])
+        y_data.append(d[2])
+        color_data.append('green' if d[0] > 0 else 'red')
+    
+    # Créer un scatter plot pour les points
+    scatter_trace = go.Scatter(x=x_data, y=y_data, mode='markers', name='Values',
+                               marker=dict(color=color_data))
+
+    # Créer la figure
+    fig = go.Figure()
+
+    # Ajouter les traces à la figure
+    fig.add_trace(scatter_trace)
+    fig.add_trace(ligneDecision)
+
+    # Calculate the range for x and y axis
+    x_range = [min(x_data) - 1, max(x_data) + 1]
+    y_range = [min(y_data) - 1, max(y_data) + 1]
+
+    # Ajouter une mise en page
+    fig.update_layout(title='Scatter Plot with Independent Line',
+                    xaxis=dict(title='X-Axis', range=x_range),
+                    yaxis=dict(title='Y-Axis', range=y_range))
+
+    # Afficher la figure
+    fig.show()
+     
+
+def predict(monocouche:list[Perceptron], input:np.array):
+    result = {}
+    classN = 1
+    for neurone in monocouche:
+        Y = neurone.calculateY(input)
+        result["class" + str(classN)] = neurone.activation(Y) == 1
+        classN = classN + 1
+    return result
+ 
     
 if __name__ == "__main__":
     # monocouche = table31()

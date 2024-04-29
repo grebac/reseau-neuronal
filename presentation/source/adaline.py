@@ -81,24 +81,6 @@ class Adaline:
         
         return seuillage
 
-def main():
-    processDataset("Datas/table_2_9.csv")
-    processDataset("Datas/table_2_10.csv")
-    
-def processDataset(filename):
-    print(os.getcwd())
-    dataset = openFile(filename)
-    print(dataset)
-
-    sigma = 0
-    rate = 0.01
-    ada = Adaline(rate, 2, sigma)
-    tuple = ada.train(dataset, 1000, 0.1)
-    print(ada)
-    print(f'nb iteration: {tuple[0]}, mean square error: {tuple[1]:.6f}')
-    
-    showPlotly(ada.getLigneDecisionPLotly(), dataset)
-
 def openFile(filename):
     # Get the directory of the current script
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -146,7 +128,26 @@ def showPlotly(ligneDecision, data):
                     yaxis=dict(title='Y-Axis', range=y_range))
 
     # Afficher la figure
-    fig.show()
+    fig.show() 
+
+def main():
+    processDataset("Datas/table_2_1.csv")
+    processDataset("Datas/table_2_9.csv")
+    processDataset("Datas/table_2_10.csv")
+    
+def processDataset(filename):
+    dataset = openFile(filename)
+
+    sigma = 0.1
+    rate = 0.01
+    ada = Adaline(rate, 2, sigma)
+    tuple = ada.train(dataset, 1000, 0.01)
+    print(ada)
+    print(f'nb iteration: {tuple[0]}, mean square error: {tuple[1]:.6f}')
+    
+    showPlotly(ada.getLigneDecisionPLotly(), dataset)
+
+
 
 if __name__ == "__main__":
     main()
