@@ -33,7 +33,7 @@ class sigmoidActivation(activationFunction):
     def phi(self, Y:np.array):
         return Y * (1 - Y)
     
-class Perceptron2:
+class Perceptron:
     def __init__(self, row_num, IterationMax=100, MeanErrorMax=0.125, sigma=0.1, learningRate=0.2, debug=False, activationFunc=identityActivation(), isAdaline=False):
         self.initializeWeights(row_num, sigma)
         
@@ -59,20 +59,18 @@ class Perceptron2:
         P = self.__calculateP(inputs)
         return self.activationFunc.activation(P)
     
-    def __calculateError(self, labels:np.array, Y:np.array) -> np.array:
+    def calculateError(self, labels:np.array, Y:np.array) -> np.array:
         return labels - Y
     
-    # Delta = n * (Ds - Ps) * inputs * phi(Ps)
-    def calculateDelta(self, labels:np.arange, Y:np.array, inputs:np.array) -> np.array:
-        errors = self.__calculateError(labels, Y)
+    # Delta = n * (Ds - Ps) * phi(Ps) * inputs
+    def calculateDelta(self, errors:np.arange, Y:np.array, inputs:np.array) -> np.array:
         phi = self.activationFunc.phi(Y)
-        
-        tmp = np.dot(errors * phi, inputs)
-        return self.learningRate * tmp 
+
+        return self.learningRate * np.dot(errors * phi, inputs)
     
     def calculateMeanError(self, inputs:np.array, labels:np.array) -> float:
         Yk = self.calculateYk(inputs)
-        errors = self.__calculateError(labels, Yk)
+        errors = self.calculateError(labels, Yk)
         N = inputs.shape[0]
         
         return np.sum(errors**2) / (N * 2)
@@ -85,7 +83,8 @@ class Perceptron2:
         iteration = 1
         while MeanError > self.MeanErrorMax and iteration < self.iterationMax:
             Yk = self.calculateYk(inputs)
-            delta = self.calculateDelta(labels, Yk, inputs)
+            errors = self.calculateError(labels, Yk)
+            delta = self.calculateDelta(errors, Yk, inputs)
             self.applyDelta(delta)
             MeanError = self.calculateMeanError(inputs, labels)
             iteration += 1
@@ -117,6 +116,23 @@ class Perceptron2:
         seuillage = go.Scatter(x=xSeuillage, y=ySeuillage, mode='lines', name=name)
         
         return seuillage
+    
+    def getPlotlySeuillage(self, name='Droite de seuillage'):
+         # Calculate the slope and intercept of the decision boundary
+        slope = - self.poids[1] / self.poids[2]
+        intercept = - self.poids[0] / self.poids[2]
+        
+        # On a maintenant besoin d'élonger la droite (car elle ne se base que sur deux points)
+        # On crée une série de valeurs X
+        xSeuillage = np.linspace(-200, 200, 400)
+        
+        # On calcule pour chaque point son ordonnée
+        ySeuillage =  slope * xSeuillage + intercept
+        
+        # On crée une droite de seuillage
+        seuillage = go.Scatter(x=xSeuillage, y=ySeuillage, mode='lines', name=name)
+        
+        return seuillage
 
 
 def process2_11(filename):
@@ -127,7 +143,7 @@ def process2_11(filename):
     
     
     
-    perceptron = Perceptron2(row_num, IterationMax=10000, MeanErrorMax=0.56, sigma=0, learningRate=0.00014, debug=False, activationFunc=identityActivation())
+    perceptron = Perceptron(row_num, IterationMax=10000, MeanErrorMax=0.56, sigma=0, learningRate=0.00014, debug=False, activationFunc=identityActivation())
     (EMoyenne, iteration) = perceptron.processBatch(inputs, labels, 30)
     print("Erreur moyenne : {}".format(EMoyenne))
     

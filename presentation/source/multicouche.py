@@ -1,23 +1,24 @@
-from matrice import PerceptronMultiCouche
-from monocouche_matrice import showPlotlyColored
+from .perceptron import Perceptron, identityActivation, sigmoidActivation
+from .monocouche_matrice import showPlotlyColored
 import pandas as pd 
 import numpy as np
 import os
 import plotly.graph_objects as go
 
 class reseauMultiCouche:
-    def __init__(self, row_num=3):
+    def __init__(self, row_num=3, iterationMax=20000, EmoyenneMin=0.001, coucheCache=2):
+        self.iterationMax = iterationMax
+        self.EmoyenneMin = EmoyenneMin
         self.coucheCache = []
-        for i in range(2):
-            self.coucheCache.append(PerceptronMultiCouche(row_num, tauxApprentissage=0.8))
-        self.coucheSortie = PerceptronMultiCouche(row_num, tauxApprentissage=0.8)
-        
-        self.row_num = row_num
+        for i in range(coucheCache):
+            self.coucheCache.append(Perceptron(row_num, learningRate=0.8, activationFunc=sigmoidActivation()))
+        self.coucheSortie = Perceptron(coucheCache+1, learningRate=0.8, activationFunc=sigmoidActivation())
+
     
     def processBoucle(self, inputs:np.array, labels:np.array):
         EMoyenne = 2000
         iteration = 0
-        while EMoyenne > 0.001 and iteration < 20000:
+        while EMoyenne > self.EmoyenneMin and iteration < self.iterationMax:
             EMoyenne = self.process(inputs, labels)
             iteration = iteration + 1
         print("Le modele a ete resolu en {} itérations avec un Erreur moyenne de {}".format(iteration, EMoyenne))
@@ -28,14 +29,12 @@ class reseauMultiCouche:
         # Prédiction couche cachée
         for i in range(len(self.coucheCache)):
             neurone = self.coucheCache[i]
-            # Prédiction
-            Kc = neurone.calculateY(inputs)
             
-            # Activation Sigmoid
-            Yc = neurone.activation(Kc)
+            # Yc
+            Yk = neurone.calculateYk(inputs)
             
             # On l'ajoute à la liste (création de l'input de la couche suivante)
-            activations_list.append(Yc)
+            activations_list.append(Yk)
 
         # Convert the list of activations to a numpy array and reshape it to have one activation per column
         YcList = np.transpose(np.array(activations_list))
@@ -47,35 +46,36 @@ class reseauMultiCouche:
 
         
         # Couche de sortie (mêmes calculs que pour la couche cachée)
-        Ps = self.coucheSortie.calculateY(YcList).flatten()
-        Zs = self.coucheSortie.activation(Ps)
+        Zs = self.coucheSortie.calculateYk(YcList)
         
         
-        # Calcul de l'erreur + Emoyenne
-        errorSortie = self.coucheSortie.calculateError(Zs, np.subtract(labels, Zs.flatten()))        
-        EMoyenne = self.coucheSortie.calculateEmoyen(np.subtract(labels, Zs.flatten()))
+        # Calcul de l'erreur moyenne
+        EMoyenne = self.coucheSortie.calculateMeanError(YcList, labels)
         print("EMoyenne : {}".format(EMoyenne))
 
-        # Retro-propagation de l'erreur de sortie + mise à jour
-        deltaSortie = self.coucheSortie.calculateDelta(YcList, errorSortie)
-        self.coucheSortie.miseAjourPoids(deltaSortie)
+        # Calcul du delta + retro-propagation
+        errorSortie = self.coucheSortie.calculateError(labels, Zs)
+        deltaSortie = self.coucheSortie.calculateDelta(errorSortie, Zs, YcList)        
         
+        
+        signalErrorSortie = self.coucheSortie.activationFunc.phi(Zs) * errorSortie
         # On passe à la couche cachée
         # Ec = Phi'(Pc) * Phi(Ps) * Wcs
         for i in range(len(self.coucheCache)):
-            neuroneCache:PerceptronMultiCouche = self.coucheCache[i]
+            neuroneCache:Perceptron = self.coucheCache[i]
             
             # Pour chaque neurone, on doit calculer la somme pondérée des erreurs qu'il a engendré dans les neurones de la prochaine couche
             # On a besoin de créer une liste des poids de la prochaine couche lié à notre neurone
             # Ici on n'a qu'un neurone de sortie donc c'est facile
             index = i+1
             poids = np.array(self.coucheSortie.poids[index])
-            sommePondéréErreurs = errorSortie * poids
-            
-            errorCache = neuroneCache.calculateError(YcList[:,index], sommePondéréErreurs)
-            
-            deltaCache = neuroneCache.calculateDelta(inputs, errorCache)
-            neuroneCache.miseAjourPoids(deltaCache)
+            sommePondéréErreurs = signalErrorSortie * poids
+                        
+            deltaCache = neuroneCache.calculateDelta(sommePondéréErreurs, YcList[:,index], inputs)
+            neuroneCache.applyDelta(deltaCache)
+        
+        # On applique la modification de poids de la couche sortie après avoir traité toutes les couches cachées
+        self.coucheSortie.applyDelta(deltaSortie)
         
         return EMoyenne
             
@@ -119,19 +119,32 @@ def XOR():
     model = reseauMultiCouche()
     model.processBoucle(inputs, labels)
     
-    showPlotlyColored2(model.coucheCache[0].getPlotlySeuillage("Neurone cache 1"), model.coucheCache[1].getPlotlySeuillage("Neurone cache 2"), np.column_stack((labels, inputs[:, 1:])))
+    showPlotlyColored2([model.coucheCache[0].getPlotlySeuillage("Neurone cache 1"), model.coucheCache[1].getPlotlySeuillage("Neurone cache 2")], np.column_stack((labels, inputs[:, 1:])))
 
 
-def main412():
+def main412(coucheCache=3):
     print('main412()')
     inputs, labels, row_num, output_num = importData('Datas\\table_4_12.csv')
     
-    model = reseauMultiCouche()
+    model = reseauMultiCouche(coucheCache=coucheCache)
+    model.processBoucle(inputs, labels)
     
-    showPlotlyColored(model.getPlotlySeuillage("Not trained"), np.column_stack((labels, inputs[:, 1:])))
+    # Create a list to store the results of getPlotlySeuillage for each coucheCache
+    plotly_data = []
+
+    # Loop through each coucheCache in the model
+    for i in range(len(model.coucheCache)):
+        # Get the plotly data for this coucheCache
+        plotly_data.append(model.coucheCache[i].getPlotlySeuillage(f"Neurone cache {i+1}"))
+
+    # Prepare the labels and inputs for the plot
+    plot_labels_inputs = np.column_stack((labels, inputs[:, 1:]))
+
+    # Show the plot
+    showPlotlyColored2(plotly_data, plot_labels_inputs)
 
 
-def showPlotlyColored2(ligneDecision, ligneDecision2,  data):
+def showPlotlyColored2(lignesDecision, data):
     x_data = []
     y_data = []
     color_data = []
@@ -150,8 +163,8 @@ def showPlotlyColored2(ligneDecision, ligneDecision2,  data):
 
     # Ajouter les traces à la figure
     fig.add_trace(scatter_trace)
-    fig.add_trace(ligneDecision)
-    fig.add_trace(ligneDecision2)
+    for ligneDecision in lignesDecision:
+        fig.add_trace(ligneDecision)
 
     # Calculate the range for x and y axis
     x_range = [min(x_data) - 1, max(x_data) + 1]
@@ -167,5 +180,5 @@ def showPlotlyColored2(ligneDecision, ligneDecision2,  data):
 
 if __name__ == '__main__':
     XOR()
-    # main412()
+    main412()
     
