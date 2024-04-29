@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net" modified="2024-04-29T14:57:13.418Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0" etag="N8EYHInYMuF8QxxTPoqE" version="24.3.1" type="device">
+  <diagram name="Page-1" id="i9JEMX0KSFU1eSHUBGEa">
+    <mxGraphModel dx="1674" dy="774" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-2" value="&lt;div&gt;Perceptron&lt;/div&gt;" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="210" y="110" width="200" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-6" value="tauxApprentissage" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="20" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-7" value="&lt;div&gt;iterationMax / ErrMoyenneMin&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="40" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-8" value="Adaline/gradient" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="60" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-9" value="Weights[ ]" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="80" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-10" value="Activation" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="130" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-13" value="- calculateP()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="190" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-14" value="+ calculateYk()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="210" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-15" value="+ calculateError()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="230" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-16" value="+ updateWeights()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="250" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-17" value="+ batchProcess()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="290" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-18" value="+ calculateMeanError()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-2">
+          <mxGeometry y="270" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-3" value="Activation" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="254" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-4" value="seuillage()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-3">
+          <mxGeometry y="20" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-5" value="deriveeActivation()" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="Yei4u8Fb1owtll-DsDn2-3">
+          <mxGeometry y="50" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Yei4u8Fb1owtll-DsDn2-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.008;entryY=0.138;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Yei4u8Fb1owtll-DsDn2-10" target="Yei4u8Fb1owtll-DsDn2-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
