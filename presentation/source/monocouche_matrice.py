@@ -1,4 +1,4 @@
-from .matrice import Perceptron
+from .perceptron import Perceptron, sigmoidActivation
 import pandas as pd 
 import numpy as np
 import os
@@ -41,7 +41,7 @@ def table31(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.
     monocouche = list[Perceptron]()
     for i in range(output_num):
         monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
-        (E, iteration) = monocouche[i].process(inputs, labels[i])
+        (E, iteration) = monocouche[i].processBatch(inputs, labels[i], 150)
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
 
     # Affichage des résultats indépendants
@@ -90,7 +90,7 @@ def table35(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.
     monocouche = list[Perceptron]()
     for i in range(output_num):
         monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
-        (E, iteration) = monocouche[i].process(inputs, labels[i])
+        (E, iteration) = monocouche[i].processBatch(inputs, labels[i], 4)
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
         
     return monocouche
@@ -107,7 +107,7 @@ def importSigne(excel_file_path):
     
 
     # On filtre un trainingDataset et un validationDataset
-    (trainingDataset, validationDataset) = splitDatasets(numpy_array)
+    (trainingDataset, validationDataset, indexesValidation) = splitDatasets(numpy_array)
     
     training_inputs = trainingDataset[:, :-5]
     training_inputs = np.insert(training_inputs, 0, 1, axis=1)
@@ -153,32 +153,37 @@ def importSigne(excel_file_path):
     row_num = training_inputs.shape[1]
     output_num = training_labels.shape[1]
 
-    return trainingDataset, validationDataset, row_num, output_num
+    return trainingDataset, validationDataset, indexesValidation, row_num, output_num
         
-def signe(trainingDataset:np.array, row_num, output_num):
+def signe(trainingDataset:np.array, row_num, output_num, maxIteration=5000, learningRate=0.0005):
     inputs = trainingDataset[0]
     labels = trainingDataset[1]
 
     # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
     monocouche = list[Perceptron]()
     for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=3000, EMoyenneMax=0.00001, sigma=0.1, tauxApprentissage=0.0005))
-        (E, iteration) = monocouche[i].batchProcess(inputs, labels[i],250)
+        monocouche.append(Perceptron(row_num, IterationMax=maxIteration, MeanErrorMax=0.00001, sigma=0.1, learningRate=learningRate, activationFunc=sigmoidActivation()))
+        (E, iteration) = monocouche[i].processBatch(inputs, labels[i],250)
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
         
     return monocouche
 
 def splitDatasets(numpy_array):    
     # 47 car 21 paramètres en XY => 21*2 = 42 + les 5 labels => 42+5 = 47
-    trainingSet = np.empty((0,47))
-    validationSet = np.empty((0,47))
+    # (+1 pour sauvegarder l'index de chaque élément) => 47 + 1 = 48
+    trainingSet = np.empty((0,48))
+    validationSet = np.empty((0,48))
+    
+    # On veut "keep track" de l'index de chaque élément
+    allIndexes = np.arange(numpy_array.shape[0])
+    numpy_array = np.column_stack((numpy_array, allIndexes))
+
     # On veut un jeu de données d'entrainement et de validation.
     # Attention, il nous faut répartir pour chaque classe une portion proportionnelle de chaque classe
     for classes in range(1,6):
         # On récupère les éléments classe par classe
-        filter = numpy_array[:,-(6-classes)].astype(int)
-        elements = numpy_array[filter == 1]
-        print(elements)
+        matchCurrentClass = numpy_array[:,-(6-classes)].astype(int)
+        elements = numpy_array[matchCurrentClass == 1]
         
         # Pour chaque classe, on garde 1/6 des éléments 
         # 60 éléments par classes => 50 training + 10 validation
@@ -186,7 +191,11 @@ def splitDatasets(numpy_array):
         trainingSet = np.vstack((trainingSet, elements[:50]))
         validationSet = np.vstack((validationSet, elements[50:]))
 
-    return (trainingSet, validationSet)
+        # On mélange une dernière fois
+        np.random.shuffle(validationSet)
+        np.random.shuffle(trainingSet)
+        
+    return (trainingSet[:,:-1], validationSet[:,:-1], validationSet[:,-1])
       
         
 def showPlotlyColored(ligneDecision, data):
@@ -224,12 +233,11 @@ def showPlotlyColored(ligneDecision, data):
      
 
 def predict(monocouche:list[Perceptron], input:np.array):
-    result = {}
+    result = []
     classN = 1
     for neurone in monocouche:
-        Y = neurone.calculateY(input)
-        result["class" + str(classN)] = neurone.activation(Y) == 1
-        classN = classN + 1
+        Yk = neurone.calculateYk(input)
+        result.append(Yk)
     return result
  
     
