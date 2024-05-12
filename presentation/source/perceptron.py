@@ -33,6 +33,16 @@ class sigmoidActivation(activationFunction):
     def phi(self, Y:np.array):
         return Y * (1 - Y)
     
+class tanhActivation(activationFunction):
+    def __init__(self, coefTanh=1) -> None:
+        self.coefTanh = coefTanh
+    
+    def activation(self, Y:np.array):
+        return np.tanh(Y)
+    
+    def phi(self, Y:np.array):
+        return 1 - Y**2
+    
 class Perceptron:
     def __init__(self, row_num, IterationMax=100, MeanErrorMax=0.125, sigma=0.1, learningRate=0.2, debug=False, activationFunc=identityActivation(), isAdaline=False):
         self.initializeWeights(row_num, sigma)

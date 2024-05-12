@@ -40,7 +40,7 @@ def table31(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.
     # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
     monocouche = list[Perceptron]()
     for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
+        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, MeanErrorMax=EMoyenneMax, sigma=sigma, learningRate=tauxApprentissage))
         (E, iteration) = monocouche[i].processBatch(inputs, labels[i], 150)
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
 
@@ -89,7 +89,7 @@ def table35(IterationMax=1000, EMoyenneMax=0.01, sigma=0.1, tauxApprentissage=0.
     # On crée un réseau neuronal monocouche avec autant de neurones qu'il nous faut de sorties
     monocouche = list[Perceptron]()
     for i in range(output_num):
-        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, EMoyenneMax=EMoyenneMax, sigma=sigma, tauxApprentissage=tauxApprentissage))
+        monocouche.append(Perceptron(row_num, IterationMax=IterationMax, MeanErrorMax=EMoyenneMax, sigma=sigma, learningRate=tauxApprentissage))
         (E, iteration) = monocouche[i].processBatch(inputs, labels[i], 4)
         print("Erreur moyenne : {} en {} itérations".format(E, iteration))
         
